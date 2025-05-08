@@ -1,16 +1,19 @@
 
-import asyncio
 from fastapi import FastAPI
-from app.api.routes import router
-from app.tasks import start_fetcher
-from app.db.models import Base
-from app.db.session import engine
+from contextlib import asynccontextmanager
+import asyncio
+from app.api.routes import api_router
+from app.services.fetcher import fetch_and_store
+from tasks import start_fetcher
 
-app = FastAPI()
-app.include_router(router)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # STARTUP
+    task = asyncio.create_task(start_fetcher())
+    await fetch_and_store()
+    yield
+    # SHUTDOWN
+    # Clean up resources if needed
 
-@app.on_event("startup")
-async def startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    asyncio.create_task(start_fetcher())
+app = FastAPI(lifespan=lifespan)
+app.include_router(api_router)
