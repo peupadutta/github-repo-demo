@@ -2,9 +2,9 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import asyncio
-from app.api.routes import api_router
+from app.api.routes import router as api_router
 from app.services.fetcher import fetch_and_store
-from tasks import start_fetcher
+from app.tasks import start_fetcher
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
